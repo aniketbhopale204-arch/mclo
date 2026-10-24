@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Mob Control Clash 3D - P2P Cannon Duel</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Responsive Arcade Frame (Centered on Laptops, 100% on Mobile) -->
+  <div class="app-viewport-wrapper" id="appViewportWrapper">
+
+    <!-- Universal Top App Header -->
+    <div class="app-top-header">
+      <div class="brand-title">⚔️ CANNON CLASH 3D</div>
+      <div class="header-actions">
+        <button class="btn-header-action" id="btnToggleAspect" onclick="window.toggleAspectMode()" title="Toggle Screen Aspect Ratio">📱 Phone</button>
+        <button class="btn-header-action" onclick="window.toggleFullscreen()" title="Toggle Fullscreen">⛶ Fullscreen</button>
+      </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- SCREEN 1: HOME MENU                                                  -->
+    <!-- ==================================================================== -->
+    <div class="screen active" id="screenHome" style="display: flex;">
+      <div class="home-content">
+        <div class="game-logo">
+          <h1>🚀 CANNON CLASH</h1>
+          <p>P2P 3D Mob Duel & Level Designer</p>
+        </div>
+
+        <div class="menu-buttons">
+          <button id="btnOpenDesigner" class="btn-arcade" onclick="window.openDesignerScreen()">
+            <span>🛠️</span>
+            <span>CREATE ROOM & DESIGN ARENA</span>
+          </button>
+
+          <button id="btnOpenJoinModal" class="btn-arcade btn-arcade-secondary" onclick="window.openJoinScreen()">
+            <span>🔑</span>
+            <span>ENTER ROOM CODE</span>
+          </button>
+        </div>
+
+        <div style="margin-top: 36px; font-size: 0.75rem; color: var(--text-muted); line-height: 1.5;">
+          100% Fair Half-Map POV Mirroring • Route Widening (16m-32m) • Peer-to-Peer
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- SCREEN 2: 3D ARENA LEVEL DESIGNER (Drag & Drop + Route Widening)      -->
+    <!-- ==================================================================== -->
+    <div class="screen" id="screenDesigner">
+      <div class="designer-view-wrap">
+        
+        <!-- Top Subheader with Room Code & Presets -->
+        <div style="padding: 6px 12px; background: var(--bg-card); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700;">CODE:</span>
+            <input type="text" id="inputRoomCode" value="CANNON-882" maxlength="12" style="background: var(--bg-dark); border: 1px solid var(--border-color); color: var(--accent-cyan); font-family: var(--font-mono); font-weight: 800; font-size: 0.85rem; padding: 3px 8px; border-radius: 6px; width: 110px; text-transform: uppercase;">
+          </div>
+
+          <div style="display: flex; gap: 4px; overflow-x: auto;">
+            <button class="btn-header-action" onclick="window.applyPreset('gauntlet')">Gauntlet</button>
+            <button class="btn-header-action" onclick="window.applyPreset('multiplier')">Rush (26m)</button>
+            <button class="btn-header-action" onclick="window.applyPreset('chaos')">Chaos</button>
+            <button class="btn-header-action" onclick="window.applyPreset('clear')">Clear</button>
+          </div>
+        </div>
+
+        <!-- Route Width Selector Bar -->
+        <div class="track-width-control-bar">
+          <span style="font-size: 0.72rem; font-weight: 800; color: var(--accent-cyan); display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+            <span>↔️</span> ROUTE WIDTH:
+          </span>
+          <div class="width-preset-pills">
+            <button class="btn-width-pill" id="btnWidth16" onclick="window.setTrackWidth(16)">16m (3 Lanes)</button>
+            <button class="btn-width-pill active" id="btnWidth20" onclick="window.setTrackWidth(20)">20m (4 Lanes)</button>
+            <button class="btn-width-pill" id="btnWidth26" onclick="window.setTrackWidth(26)">26m (6 Lanes)</button>
+            <button class="btn-width-pill" id="btnWidth32" onclick="window.setTrackWidth(32)">32m (8 Lanes)</button>
+          </div>
+        </div>
+
+        <!-- 3D Track Designer Viewport (Interactive Drag & Drop Canvas) -->
+        <div class="designer-canvas-box" id="designer3dPreview"></div>
+
+        <!-- Selected Element Floating Bar -->
+        <div class="designer-selection-bar" id="selectionToolbar" style="display: none;">
+          <span id="selectedItemLabel" style="font-weight: 700; color: var(--gold-accent);">Selected: Obstacle</span>
+          <button class="btn-delete-item" onclick="window.deleteSelectedObstacle()">🗑️ Delete</button>
+        </div>
+
+        <!-- Obstacle Drag Palette (Horizontal Drawer at Bottom) -->
+        <div class="obstacle-palette-bar">
+          <div style="font-size: 0.68rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: flex; justify-content: space-between;">
+            <span>Design bottom half • Opponent half auto-mirrors for 100% fair duel</span>
+            <span style="color: var(--accent-cyan);">14 Hazards Available</span>
+          </div>
+
+          <div class="palette-scroll-row" id="paletteScrollRow">
+            <!-- Dynamically populated chips with drag & touch events -->
+          </div>
+        </div>
+
+        <!-- Designer Bottom Actions -->
+        <div class="designer-actions-row">
+          <button class="btn-arcade btn-arcade-secondary" style="padding: 10px 14px; font-size: 0.82rem;" onclick="window.backHomeFromDesigner()">
+            ⬅️ Back
+          </button>
+
+          <button class="btn-arcade" style="padding: 10px 20px; font-size: 0.85rem;" onclick="window.confirmDesignAndCreate()">
+            ✅ OK - CREATE & WAIT
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- SCREEN 3: WAITING FOR PLAYER 2 SCREEN (Host)                        -->
+    <!-- ==================================================================== -->
+    <div class="screen" id="screenWaiting">
+      <div class="waiting-card">
+        <h2 style="font-size: 1.3rem; font-weight: 800;">Waiting for Opponent</h2>
+        <p style="color: var(--text-muted); font-size: 0.82rem; margin-top: 6px;">
+          Share this Room Code with Player B to start match:
+        </p>
+
+        <div class="room-code-display-box">
+          <span style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700;">ROOM CODE</span>
+          <span class="room-code-text" id="displayWaitingCode">CANNON-882</span>
+          <button class="btn-copy-code" id="btnCopyWaitingCode" onclick="window.copyWaitingCode()">📋 Copy Code</button>
+        </div>
+
+        <div class="waiting-spinner"></div>
+        <p style="font-size: 0.82rem; color: var(--accent-cyan); font-weight: 600;">
+          Listening for connection...
+        </p>
+
+        <button class="btn-arcade btn-arcade-secondary" style="margin-top: 24px; padding: 10px 24px; font-size: 0.82rem;" onclick="window.cancelWaiting()">
+          Cancel Lobby
+        </button>
+      </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- SCREEN 4: ENTER ROOM CODE SCREEN (Guest / Player 2)                  -->
+    <!-- ==================================================================== -->
+    <div class="screen" id="screenJoin">
+      <div class="join-card">
+        <h2 style="font-size: 1.3rem; font-weight: 800;">Enter Room Code</h2>
+        <p style="color: var(--text-muted); font-size: 0.82rem; margin-top: 6px;">
+          Enter the code created by Host (Player A):
+        </p>
+
+        <input type="text" id="inputJoinCode" class="input-room-code" placeholder="CANNON-882" maxlength="12">
+
+        <button class="btn-arcade" style="width: 100%; max-width: 300px; margin-bottom: 10px;" onclick="window.submitJoinCode()">
+          <span>🚀 JOIN MATCH</span>
+        </button>
+
+        <button class="btn-arcade btn-arcade-secondary" style="width: 100%; max-width: 300px; font-size: 0.82rem; padding: 10px;" onclick="window.cancelJoin()">
+          Cancel
+        </button>
+      </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- SCREEN 5: ACTIVE 3D GAMEPLAY (Each player sees their OWN tank)        -->
+    <!-- ==================================================================== -->
+    <div class="screen" id="screenGame">
+      <!-- 3D Canvas Viewport -->
+      <div class="game-viewport" id="game3dViewport"></div>
+
+      <!-- In-Game Top Bar -->
+      <div class="ingame-top-bar">
+        <div class="player-identity-pill" id="hudPlayerBadge">
+          <span>🎯</span>
+          <span id="hudPlayerRole">You (Blue Tank)</span>
+        </div>
+
+        <div class="subtle-ping-box" id="hudSubtlePing">
+          Ping: 32ms | SYNCED
+        </div>
+      </div>
+
+      <!-- In-Game Bottom Controls -->
+      <div class="ingame-bottom-bar">
+        <div class="controls-cluster">
+          <button id="btnSummonChampion" class="btn-champion" disabled onclick="window.spawnChampionUnit()" title="Fills as mobs march">
+            <span>⚡ GIANT (0%)</span>
+          </button>
+
+          <div class="slider-track-container">
+            <input type="range" id="ingameCannonSlider" min="-8" max="8" step="0.1" value="0">
+          </div>
+        </div>
+
+        <div style="font-size: 0.72rem; color: rgba(255,255,255,0.75); text-shadow: 0 1px 3px rgba(0,0,0,0.8); text-align: center;">
+          Drag anywhere to steer • Hold to stream mobs
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- SCREEN 6: VICTORY / LOOT CAP WALL (Hazard 11 Post-Match Rewards)      -->
+    <!-- ==================================================================== -->
+    <div class="screen" id="screenLoot">
+      <div class="loot-card">
+        <div class="loot-chest-icon">🎁</div>
+        <h2 id="lootResultTitle" style="font-size: 1.6rem; font-weight: 800; color: var(--gold-accent);">VICTORY!</h2>
+        <p style="color: var(--text-muted); font-size: 0.8rem;" id="lootResultSubtitle">Authoritative Match Complete</p>
+
+        <div style="margin-top: 16px; text-align: left; width: 100%; max-width: 300px;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 700;">
+            <span>LOOT CAPACITY (Hazard 11):</span>
+            <span style="color: var(--gold-accent);">850 / 1000 BRICKS</span>
+          </div>
+          <div class="loot-meter-bar">
+            <div class="loot-meter-fill"></div>
+          </div>
+        </div>
+
+        <button class="btn-arcade" style="width: 100%; max-width: 300px; margin-top: 20px;" onclick="window.returnHomeFromLoot()">
+          <span>🔄 PLAY AGAIN</span>
+        </button>
+      </div>
+    </div>
+
+  </div> <!-- End .app-viewport-wrapper -->
+
+  <!-- Load Core Game Engine -->
+  <script src="game.js"></script>
+
+  <!-- Main Orchestrator -->
+  <script>
+    (function () {
+      const {
+        PeerGame,
+        DefaultArenaLayout,
+        buildSymmetricArena,
+        HybridP2PTransport
+      } = NetcodeGame;
+
+      function showScreen(screenId) {
+        const screenIds = ['screenHome', 'screenDesigner', 'screenWaiting', 'screenJoin', 'screenGame', 'screenLoot'];
+        screenIds.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.classList.remove('active');
+            el.style.display = 'none';
+          }
+        });
+        const target = document.getElementById(screenId);
+        if (target) {
+          target.classList.add('active');
+          target.style.display = 'flex';
+        }
+      }
+
+      // State
+      let currentRole = "HOST";
+      let currentRoomCode = "CANNON-882";
+      let activeGameInstance = null;
+      let designerPreviewGame = null;
+      let nextElementId = 100;
+      let isWideMode = false;
+
+      // Creator's Half-Map Layout (Creator designs only bottom half Z in [3, 44])
+      let workingCreatorHalfLayout = {
+        name: "Canyon Gauntlet",
+        trackWidth: 20,
+        gates: [
+          { id: "gate_mult_x2", type: "MULT", x: -4.5, width: 7, z: 24, multiplier: 2, label: "✖2", color: "#00d4ff", moving: false },
+          { id: "gate_mult_x3", type: "MULT", x: 4.5, width: 7, z: 12, multiplier: 3, label: "✖3", color: "#00e5ff", moving: true, oscSpeed: 1.8, oscRange: 2.5 },
+          { id: "gate_sub_10", type: "SUB", x: 3.5, width: 6, z: 34, subVal: 10, label: "➖10", color: "#ef4444", moving: false }
+        ],
+        obstacles: [
+          { id: "obs_wall", type: "BARRIER", x: -5.5, z: 16, width: 2.5, depth: 10, height: 2.2, color: "#7c4d32" },
+          { id: "conveyor_back", type: "CONVEYOR", x: 0, z: 20, width: 6, depth: 8, pushZ: 8.0 },
+          { id: "block_50", type: "HEALTH_BLOCK", x: 0, z: 30, width: 3.5, depth: 3.5, height: 2.0, hp: 50, maxHp: 50, color: "#f59e0b" },
+          { id: "portal_pair", type: "PORTAL", entrance: { x: -4.5, z: 40 }, exit: { x: -4.5, z: 8 } }
+        ],
+        features: {
+          hasBaseShield: true,
+          championSpawns: true,
+          hasBossEncounter: false
+        }
+      };
+
+      // Full Symmetric Arena Layout (Auto-mirrored for 100% fair play)
+      let workingArenaLayout = buildSymmetricArena(workingCreatorHalfLayout);
+
+      // Fullscreen & Aspect ratio toggles
+      window.toggleFullscreen = function () {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch(() => {});
+        } else {
+          document.exitFullscreen().catch(() => {});
+        }
+      };
+
+      window.toggleAspectMode = function () {
+        isWideMode = !isWideMode;
+        const wrapper = document.getElementById('appViewportWrapper');
+        const btn = document.getElementById('btnToggleAspect');
+        if (isWideMode) {
+          wrapper.classList.add('wide-mode');
+          btn.textContent = "💻 Wide";
+        } else {
+          wrapper.classList.remove('wide-mode');
+          btn.textContent = "📱 Phone";
+        }
+        if (designerPreviewGame && designerPreviewGame.renderer3D) {
+          designerPreviewGame.renderer3D.resize();
+        }
+        if (activeGameInstance && activeGameInstance.renderer3D) {
+          activeGameInstance.renderer3D.resize();
+        }
+      };
+
+      function generateRandomRoomCode() {
+        const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+        let str = "CANNON-";
+        for (let i = 0; i < 3; i++) str += chars.charAt(Math.floor(Math.random() * chars.length));
+        return str;
+      }
+
+      // ----------------------------------------------------------------------
+      // ROUTE WIDENING CONTROLLER (16m - 32m)
+      // ----------------------------------------------------------------------
+
+      window.setTrackWidth = function (width) {
+        workingCreatorHalfLayout.trackWidth = width;
+        workingArenaLayout = buildSymmetricArena(workingCreatorHalfLayout);
+
+        if (designerPreviewGame) {
+          designerPreviewGame.setArenaLayout(workingArenaLayout);
+        }
+
+        // Update active width pills in UI
+        [16, 20, 26, 32].forEach(w => {
+          const btn = document.getElementById(`btnWidth${w}`);
+          if (btn) btn.classList.toggle('active', w === width);
+        });
+      };
+
+      // ----------------------------------------------------------------------
+      // 14 HAZARDS PALETTE DEFINITION
+      // ----------------------------------------------------------------------
+      const PALETTE_DEFINITIONS = [
+        { type: "MULT_X2", label: "✖2 Gate", group: "mult", icon: "✖2", color: "#00d4ff" },
+        { type: "MULT_X3", label: "✖3 Gate", group: "mult", icon: "✖3", color: "#00e5ff" },
+        { type: "ADD_10",  label: "➕10 Gate", group: "add",  icon: "➕10", color: "#10b981" },
+        { type: "SUB_10",  label: "➖10 Gate", group: "sub",  icon: "➖10", color: "#ef4444" },
+        { type: "DIV_2",   label: "➗2 Gate",  group: "sub",  icon: "➗2", color: "#dc2626" },
+        { type: "MOVING",  label: "🔀 Moving", group: "mult", icon: "🔀", color: "#38bdf8" },
+        { type: "WALL",    label: "🧱 Wall",   group: "obs",  icon: "🧱", color: "#7c4d32" },
+        { type: "PIPE",    label: "🟢 Pipe",   group: "obs",  icon: "🟢", color: "#22c55e" },
+        { type: "VOID",    label: "🕳️ Void",   group: "obs",  icon: "🕳️", color: "#ef4444" },
+        { type: "BRIDGE",  label: "🌉 Bridge", group: "obs",  icon: "🌉", color: "#b45309" },
+        { type: "CONVEYOR",label: "🏃 Conveyor", group: "obs", icon: "🏃", color: "#64748b" },
+        { type: "PORTAL",  label: "🌀 Portal", group: "special", icon: "🌀", color: "#8b5cf6" },
+        { type: "BLOCK_50",label: "🔢 50 HP",  group: "block", icon: "🔢", color: "#f59e0b" }
+      ];
+
+      function buildPaletteUI() {
+        const row = document.getElementById('paletteScrollRow');
+        row.innerHTML = "";
+
+        PALETTE_DEFINITIONS.forEach(def => {
+          const chip = document.createElement('div');
+          chip.className = `palette-item-chip ${def.group}`;
+          chip.setAttribute('data-type', def.type);
+          chip.setAttribute('draggable', 'true');
+          chip.innerHTML = `${def.label}`;
+
+          // HTML5 Drag for Laptops
+          chip.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', def.type);
+            e.dataTransfer.effectAllowed = 'copy';
+          });
+
+          // Pointer / Touch Drag for Mobile & Touchscreens
+          chip.addEventListener('pointerdown', (e) => startPalettePointerDrag(e, def));
+
+          row.appendChild(chip);
+        });
+      }
+
+      // ----------------------------------------------------------------------
+      // INTERACTIVE DRAG & DROP DESIGNER LOGIC
+      // ----------------------------------------------------------------------
+
+      let activeGhostEl = null;
+      let activeDragType = null;
+      let isDraggingFromPalette = false;
+
+      function startPalettePointerDrag(e, def) {
+        activeDragType = def.type;
+        isDraggingFromPalette = true;
+
+        // Create floating ghost
+        activeGhostEl = document.createElement('div');
+        activeGhostEl.className = 'drag-ghost-chip';
+        activeGhostEl.textContent = def.label;
+        document.body.appendChild(activeGhostEl);
+        updateGhostPos(e.clientX, e.clientY);
+
+        const onMove = (moveEvt) => {
+          if (!isDraggingFromPalette) return;
+          updateGhostPos(moveEvt.clientX, moveEvt.clientY);
+
+          // Check if hovering over designer canvas
+          const canvasBox = document.getElementById('designer3dPreview');
+          const rect = canvasBox.getBoundingClientRect();
+          if (
+            moveEvt.clientX >= rect.left && moveEvt.clientX <= rect.right &&
+            moveEvt.clientY >= rect.top && moveEvt.clientY <= rect.bottom
+          ) {
+            const relX = (moveEvt.clientX - rect.left);
+            const relY = (moveEvt.clientY - rect.top);
+            if (designerPreviewGame && designerPreviewGame.renderer3D) {
+              const trackPos = designerPreviewGame.renderer3D.designerScreenToTrack(relX, relY);
+              designerPreviewGame.renderer3D.dragPreview = {
+                type: def.type,
+                x: trackPos.x,
+                z: trackPos.z,
+                label: def.label,
+                color: def.color
+              };
+            }
+          } else {
+            if (designerPreviewGame && designerPreviewGame.renderer3D) {
+              designerPreviewGame.renderer3D.dragPreview = null;
+            }
+          }
+        };
+
+        const onUp = (upEvt) => {
+          isDraggingFromPalette = false;
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+
+          if (activeGhostEl) {
+            activeGhostEl.remove();
+            activeGhostEl = null;
+          }
+
+          if (designerPreviewGame && designerPreviewGame.renderer3D) {
+            designerPreviewGame.renderer3D.dragPreview = null;
+          }
+
+          const canvasBox = document.getElementById('designer3dPreview');
+          const rect = canvasBox.getBoundingClientRect();
+
+          // Dropped onto canvas!
+          if (
+            upEvt.clientX >= rect.left && upEvt.clientX <= rect.right &&
+            upEvt.clientY >= rect.top && upEvt.clientY <= rect.bottom
+          ) {
+            const relX = (upEvt.clientX - rect.left);
+            const relY = (upEvt.clientY - rect.top);
+            if (designerPreviewGame && designerPreviewGame.renderer3D) {
+              const trackPos = designerPreviewGame.renderer3D.designerScreenToTrack(relX, relY);
+              spawnObstacleAt(def.type, trackPos.x, trackPos.z);
+            }
+          } else {
+            // Tapped without dragging: place at center of creator half
+            spawnObstacleAt(def.type, 0, 22);
+          }
+        };
+
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+      }
+
+      function updateGhostPos(x, y) {
+        if (activeGhostEl) {
+          activeGhostEl.style.left = `${x}px`;
+          activeGhostEl.style.top = `${y}px`;
+        }
+      }
+
+      function initDesignerPreview() {
+        const container = document.getElementById('designer3dPreview');
+        if (designerPreviewGame) {
+          designerPreviewGame.stop();
+          designerPreviewGame = null;
+        }
+        container.innerHTML = "";
+
+        designerPreviewGame = new PeerGame({
+          isHost: true,
+          container: container,
+          viewMode: "DESIGNER", // Tactical top-down view for clean obstacle placement
+          arenaLayout: workingArenaLayout
+        });
+        designerPreviewGame.start();
+
+        // Bind interactive canvas drag-and-drop
+        bindCanvasDesignerEvents(container);
+      }
+
+      function bindCanvasDesignerEvents(container) {
+        const canvas = container.querySelector('canvas');
+        if (!canvas) return;
+
+        // Native HTML5 drop support
+        canvas.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'copy';
+        });
+
+        canvas.addEventListener('drop', (e) => {
+          e.preventDefault();
+          const type = e.dataTransfer.getData('text/plain');
+          if (type && designerPreviewGame && designerPreviewGame.renderer3D) {
+            const rect = canvas.getBoundingClientRect();
+            const sx = (e.clientX - rect.left);
+            const sy = (e.clientY - rect.top);
+            const trackPos = designerPreviewGame.renderer3D.designerScreenToTrack(sx, sy);
+            spawnObstacleAt(type, trackPos.x, trackPos.z);
+          }
+        });
+
+        function getCanvasPoint(e) {
+          const rect = canvas.getBoundingClientRect();
+          const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+          const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+          return {
+            x: (clientX - rect.left),
+            y: (clientY - rect.top)
+          };
+        }
+
+        function findElementAtPoint(pt) {
+          const renderer = designerPreviewGame ? designerPreviewGame.renderer3D : null;
+          if (!renderer) return null;
+
+          const trackW = workingArenaLayout.trackWidth || 20;
+
+          // Check gates
+          for (const gate of workingArenaLayout.gates) {
+            const screenPt = renderer.trackToDesignerScreen(gate.x || 0, gate.z);
+            const gw = (gate.width || 7) * ((canvas.width - 64) / (trackW + 2.4));
+            if (Math.abs(pt.x - screenPt.x) < gw / 2 + 10 && Math.abs(pt.y - screenPt.y) < 18) {
+              return { item: gate, type: "GATE" };
+            }
+          }
+
+          // Check obstacles
+          for (const obs of workingArenaLayout.obstacles) {
+            const screenPt = renderer.trackToDesignerScreen(obs.x || 0, obs.z || 0);
+            if (Math.abs(pt.x - screenPt.x) < 24 && Math.abs(pt.y - screenPt.y) < 24) {
+              return { item: obs, type: "OBSTACLE" };
+            }
+          }
+          return null;
+        }
+
+        let draggedTrackItem = null;
+        let isDraggingTrackItem = false;
+
+        const onDown = (e) => {
+          const pt = getCanvasPoint(e);
+          const found = findElementAtPoint(pt);
+
+          if (found) {
+            // Find the master item on the creator half if user clicked mirrored twin
+            let targetItem = found.item;
+            if (found.item.isMirror && found.item.sourceId) {
+              targetItem = workingCreatorHalfLayout.gates.find(g => g.id === found.item.sourceId) ||
+                           workingCreatorHalfLayout.obstacles.find(o => o.id === found.item.sourceId) ||
+                           found.item;
+            }
+
+            draggedTrackItem = targetItem;
+            isDraggingTrackItem = true;
+            if (designerPreviewGame && designerPreviewGame.renderer3D) {
+              designerPreviewGame.renderer3D.selectedObstacleId = targetItem.id;
+            }
+            updateSelectionBar(targetItem);
+          } else {
+            // Deselect
+            if (designerPreviewGame && designerPreviewGame.renderer3D) {
+              designerPreviewGame.renderer3D.selectedObstacleId = null;
+            }
+            document.getElementById('selectionToolbar').style.display = 'none';
+          }
+        };
+
+        const onMove = (e) => {
+          if (!isDraggingTrackItem || !draggedTrackItem || !designerPreviewGame) return;
+          const pt = getCanvasPoint(e);
+          const trackPos = designerPreviewGame.renderer3D.designerScreenToTrack(pt.x, pt.y);
+
+          // Update position strictly on creator's half
+          const trackW = workingCreatorHalfLayout.trackWidth || 20;
+          const halfW = trackW / 2;
+          draggedTrackItem.x = Math.max(-halfW + 1.5, Math.min(halfW - 1.5, trackPos.x));
+          draggedTrackItem.z = Math.max(3, Math.min(44, trackPos.z));
+
+          if (draggedTrackItem.entrance) {
+            draggedTrackItem.entrance.x = draggedTrackItem.x;
+            draggedTrackItem.entrance.z = draggedTrackItem.z;
+          }
+
+          // Rebuild full symmetric arena in real time!
+          workingArenaLayout = buildSymmetricArena(workingCreatorHalfLayout);
+          designerPreviewGame.setArenaLayout(workingArenaLayout);
+
+          updateSelectionBar(draggedTrackItem);
+        };
+
+        const onUp = () => {
+          isDraggingTrackItem = false;
+        };
+
+        canvas.addEventListener('mousedown', onDown);
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+
+        canvas.addEventListener('touchstart', onDown, { passive: true });
+        window.addEventListener('touchmove', onMove, { passive: true });
+        window.addEventListener('touchend', onUp);
+      }
+
+      function updateSelectionBar(item) {
+        const bar = document.getElementById('selectionToolbar');
+        const label = document.getElementById('selectedItemLabel');
+        bar.style.display = 'flex';
+        const name = item.label || item.type || "Obstacle";
+        const mirrorZ = item.z ? (-item.z).toFixed(1) : 0;
+        label.textContent = `Selected: ${name} (You: X=${item.x.toFixed(1)}, Z=${item.z.toFixed(1)} 🪞 Mirror: X=${(-item.x).toFixed(1)}, Z=${mirrorZ})`;
+      }
+
+      window.deleteSelectedObstacle = function () {
+        if (!designerPreviewGame || !designerPreviewGame.renderer3D) return;
+        const selId = designerPreviewGame.renderer3D.selectedObstacleId;
+        if (!selId) return;
+
+        // Delete from creator half layout
+        workingCreatorHalfLayout.gates = workingCreatorHalfLayout.gates.filter(g => g.id !== selId && g.id !== `${selId}_mirror`);
+        workingCreatorHalfLayout.obstacles = workingCreatorHalfLayout.obstacles.filter(o => o.id !== selId && o.id !== `${selId}_mirror`);
+
+        // Rebuild full symmetric arena
+        workingArenaLayout = buildSymmetricArena(workingCreatorHalfLayout);
+        designerPreviewGame.setArenaLayout(workingArenaLayout);
+
+        designerPreviewGame.renderer3D.selectedObstacleId = null;
+        document.getElementById('selectionToolbar').style.display = 'none';
+      };
+
+      // Add new obstacle at specific coordinates (clamped strictly to creator's half Z in [3, 44])
+      function spawnObstacleAt(type, targetX, targetZ) {
+        const id = `item_${type}_${nextElementId++}`;
+        const trackW = workingCreatorHalfLayout.trackWidth || 20;
+        const halfW = trackW / 2;
+
+        const newX = Math.max(-halfW + 1.5, Math.min(halfW - 1.5, targetX));
+        const newZ = Math.max(3, Math.min(44, Math.abs(targetZ || 20)));
+
+        if (type === "MULT_X2") {
+          workingCreatorHalfLayout.gates.push({ id, type: "MULT", x: newX, width: 7, z: newZ, multiplier: 2, label: "✖2", color: "#00d4ff", moving: false });
+        } else if (type === "MULT_X3") {
+          workingCreatorHalfLayout.gates.push({ id, type: "MULT", x: newX, width: 7, z: newZ, multiplier: 3, label: "✖3", color: "#00e5ff", moving: false });
+        } else if (type === "ADD_10") {
+          workingCreatorHalfLayout.gates.push({ id, type: "ADD", x: newX, width: 6, z: newZ, addVal: 10, label: "➕10", color: "#10b981", moving: false });
+        } else if (type === "SUB_10") {
+          workingCreatorHalfLayout.gates.push({ id, type: "SUB", x: newX, width: 6, z: newZ, subVal: 10, label: "➖10", color: "#ef4444", moving: false });
+        } else if (type === "DIV_2") {
+          workingCreatorHalfLayout.gates.push({ id, type: "DIV", x: newX, width: 6, z: newZ, divVal: 2, label: "➗2", color: "#dc2626", moving: false });
+        } else if (type === "MOVING") {
+          workingCreatorHalfLayout.gates.push({ id, type: "MULT", x: newX, width: 6, z: newZ, multiplier: 2, label: "✖2", color: "#38bdf8", moving: true, oscSpeed: 2.0, oscRange: 3.0 });
+        } else if (type === "WALL") {
+          workingCreatorHalfLayout.obstacles.push({ id, type: "BARRIER", x: newX, z: newZ, width: 2.5, depth: 10, height: 2.2, color: "#7c4d32" });
+        } else if (type === "PIPE") {
+          workingCreatorHalfLayout.obstacles.push({ id, type: "PIPE", x: newX, z: newZ, radius: 2.0, length: 12, color: "#22c55e" });
+        } else if (type === "VOID") {
+          workingCreatorHalfLayout.obstacles.push({ id, type: "VOID_GAP", x: newX, z: newZ, width: 7, depth: 8 });
+        } else if (type === "BRIDGE") {
+          workingCreatorHalfLayout.obstacles.push({ id, type: "MOVING_BRIDGE", x: newX, z: newZ, width: 8, depth: 8, cycleDuration: 3.0 });
+        } else if (type === "CONVEYOR") {
+          workingCreatorHalfLayout.obstacles.push({ id, type: "CONVEYOR", x: newX, z: newZ, width: 6, depth: 8, pushZ: 8.0 });
+        } else if (type === "PORTAL") {
+          workingCreatorHalfLayout.obstacles.push({ id, type: "PORTAL", entrance: { x: newX, z: newZ }, exit: { x: newX, z: Math.max(3, newZ - 18) } });
+        } else if (type === "BLOCK_50") {
+          workingCreatorHalfLayout.obstacles.push({ id, type: "HEALTH_BLOCK", x: newX, z: newZ, width: 3.5, depth: 3.5, height: 2.0, hp: 50, maxHp: 50, color: "#f59e0b" });
+        }
+
+        // Rebuild full symmetric arena in real time!
+        workingArenaLayout = buildSymmetricArena(workingCreatorHalfLayout);
+
+        if (designerPreviewGame) {
+          designerPreviewGame.setArenaLayout(workingArenaLayout);
+          designerPreviewGame.renderer3D.selectedObstacleId = id;
+          const added = workingCreatorHalfLayout.gates.find(g => g.id === id) || workingCreatorHalfLayout.obstacles.find(o => o.id === id);
+          if (added) updateSelectionBar(added);
+        }
+      }
+
+      window.openDesignerScreen = function () {
+        currentRole = "HOST";
+        currentRoomCode = generateRandomRoomCode();
+        document.getElementById('inputRoomCode').value = currentRoomCode;
+        showScreen('screenDesigner');
+        buildPaletteUI();
+        window.setTrackWidth(workingCreatorHalfLayout.trackWidth || 20);
+        setTimeout(initDesignerPreview, 50);
+      };
+
+      window.openJoinScreen = function () {
+        currentRole = "GUEST";
+        document.getElementById('inputJoinCode').value = "";
+        showScreen('screenJoin');
+      };
+
+      window.backHomeFromDesigner = function () {
+        if (designerPreviewGame) designerPreviewGame.stop();
+        showScreen('screenHome');
+      };
+
+      window.applyPreset = function (presetName) {
+        if (presetName === "gauntlet") {
+          workingCreatorHalfLayout = {
+            name: "Canyon Gauntlet",
+            trackWidth: 20,
+            gates: [
+              { id: "g1", type: "MULT", x: -4.5, width: 7, z: 24, multiplier: 2, label: "✖2", color: "#00d4ff", moving: false },
+              { id: "g2", type: "MULT", x: 4.5, width: 7, z: 12, multiplier: 3, label: "✖3", color: "#00e5ff", moving: true, oscSpeed: 1.8, oscRange: 2.5 },
+              { id: "g3", type: "SUB", x: 3.5, width: 6, z: 34, subVal: 10, label: "➖10", color: "#ef4444", moving: false }
+            ],
+            obstacles: [
+              { id: "obs1", type: "BARRIER", x: -5.5, z: 16, width: 2.5, depth: 10, height: 2.2, color: "#7c4d32" },
+              { id: "obs2", type: "CONVEYOR", x: 0, z: 20, width: 6, depth: 8, pushZ: 8.0 },
+              { id: "obs3", type: "HEALTH_BLOCK", x: 0, z: 30, width: 3.5, depth: 3.5, height: 2.0, hp: 50, maxHp: 50, color: "#f59e0b" }
+            ],
+            features: { hasBaseShield: true, championSpawns: true }
+          };
+          window.setTrackWidth(20);
+        } else if (presetName === "multiplier") {
+          workingCreatorHalfLayout = {
+            name: "Multiplier Rush (Wide 6 Lanes)",
+            trackWidth: 26,
+            gates: [
+              { id: "g1", type: "MULT", x: -6, width: 7, z: 28, multiplier: 2, label: "✖2", color: "#00d4ff", moving: false },
+              { id: "g2", type: "MULT", x: 6, width: 7, z: 14, multiplier: 3, label: "✖3", color: "#00e5ff", moving: true, oscSpeed: 2.0, oscRange: 3.5 },
+              { id: "g3", type: "ADD", x: 0, width: 7, z: 20, addVal: 10, label: "➕10", color: "#10b981", moving: false }
+            ],
+            obstacles: [
+              { id: "b1", type: "HEALTH_BLOCK", x: -2, z: 22, width: 3.5, depth: 3.5, height: 2.0, hp: 50, maxHp: 50, color: "#f59e0b" }
+            ],
+            features: { hasBaseShield: true, championSpawns: true }
+          };
+          window.setTrackWidth(26);
+        } else if (presetName === "chaos") {
+          workingCreatorHalfLayout = {
+            name: "Chaos Canyon",
+            trackWidth: 20,
+            gates: [
+              { id: "g1", type: "SUB", x: -4, width: 6, z: 25, subVal: 10, label: "➖10", color: "#ef4444", moving: false },
+              { id: "g2", type: "DIV", x: 4, width: 6, z: 12, divVal: 2, label: "➗2", color: "#dc2626", moving: true, oscSpeed: 2.2, oscRange: 2.8 },
+              { id: "g3", type: "MULT", x: 0, width: 7, z: 35, multiplier: 3, label: "✖3", color: "#00e5ff", moving: false }
+            ],
+            obstacles: [
+              { id: "o1", type: "VOID_GAP", x: 0, z: 18, width: 7, depth: 8 },
+              { id: "o2", type: "BARRIER", x: -5, z: 30, width: 2.5, depth: 10, height: 2.2, color: "#7c4d32" }
+            ],
+            features: { hasBaseShield: true, championSpawns: true }
+          };
+          window.setTrackWidth(20);
+        } else if (presetName === "clear") {
+          workingCreatorHalfLayout = { name: "Blank Fair Track", trackWidth: 20, gates: [], obstacles: [], features: { hasBaseShield: true, championSpawns: true } };
+          window.setTrackWidth(20);
+        }
+
+        workingArenaLayout = buildSymmetricArena(workingCreatorHalfLayout);
+        if (designerPreviewGame) {
+          designerPreviewGame.setArenaLayout(workingArenaLayout);
+          document.getElementById('selectionToolbar').style.display = 'none';
+        }
+      };
+
+      window.confirmDesignAndCreate = function () {
+        if (designerPreviewGame) designerPreviewGame.stop();
+
+        const inputEl = document.getElementById('inputRoomCode');
+        currentRoomCode = (inputEl.value || generateRandomRoomCode()).toUpperCase().trim();
+        document.getElementById('displayWaitingCode').textContent = currentRoomCode;
+
+        showScreen('screenWaiting');
+        startHostLobby(currentRoomCode);
+      };
+
+      window.copyWaitingCode = function () {
+        const btn = document.getElementById('btnCopyWaitingCode');
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(currentRoomCode).then(() => {
+            btn.textContent = "✓ Copied!";
+            setTimeout(() => btn.textContent = "📋 Copy Code", 1500);
+          });
+        }
+      };
+
+      window.cancelWaiting = function () {
+        if (activeGameInstance) activeGameInstance.stop();
+        showScreen('screenHome');
+      };
+
+      window.cancelJoin = function () {
+        showScreen('screenHome');
+      };
+
+      window.submitJoinCode = function () {
+        const inputEl = document.getElementById('inputJoinCode');
+        const code = inputEl.value.toUpperCase().trim();
+        if (!code) {
+          alert("Please enter a valid Room Code");
+          return;
+        }
+        currentRoomCode = code;
+        startGuestJoin(currentRoomCode);
+      };
+
+      window.returnHomeFromLoot = function () {
+        if (activeGameInstance) activeGameInstance.stop();
+        showScreen('screenHome');
+      };
+
+      window.spawnChampionUnit = function () {
+        if (activeGameInstance) activeGameInstance.spawnChampion();
+      };
+
+      // ----------------------------------------------------------------------
+      // In-Game P2P Match Launching
+      // ----------------------------------------------------------------------
+
+      function configureInGameCannonSlider() {
+        const slider = document.getElementById('ingameCannonSlider');
+        if (!slider) return;
+        const trackW = workingArenaLayout.trackWidth || 20;
+        const maxClamp = Math.max(4.0, trackW / 2 - 2.5);
+        slider.min = (-maxClamp).toFixed(1);
+        slider.max = (maxClamp).toFixed(1);
+        slider.value = "0";
+      }
+
+      function startHostLobby(roomCode) {
+        if (activeGameInstance) activeGameInstance.stop();
+        const viewport = document.getElementById('game3dViewport');
+        viewport.innerHTML = "";
+
+        const transport = new HybridP2PTransport(roomCode, true);
+
+        activeGameInstance = new PeerGame({
+          isHost: true,
+          roomCode: roomCode,
+          container: viewport,
+          viewMode: "CHASE", // 3D Perspective Chase View from Host's OWN Tank
+          arenaLayout: workingArenaLayout,
+          transport: transport,
+          onHudUpdate: updateGameHud,
+          onGameOver: handleGameOver
+        });
+        activeGameInstance.bindDOMEvents(document.getElementById('ingameCannonSlider'));
+        configureInGameCannonSlider();
+
+        transport.onConnected = () => launchActiveMatch();
+
+        const origDispatch = transport.dispatchMessage.bind(transport);
+        transport.dispatchMessage = function (payload) {
+          if (payload && payload.type === "PING" && document.getElementById('screenWaiting').style.display === 'flex') {
+            launchActiveMatch();
+          }
+          origDispatch(payload);
+        };
+      }
+
+      function startGuestJoin(roomCode) {
+        if (activeGameInstance) activeGameInstance.stop();
+        const viewport = document.getElementById('game3dViewport');
+        viewport.innerHTML = "";
+
+        const transport = new HybridP2PTransport(roomCode, false);
+
+        activeGameInstance = new PeerGame({
+          isHost: false,
+          roomCode: roomCode,
+          container: viewport,
+          viewMode: "CHASE", // 3D Perspective Chase View from Guest's OWN Tank
+          arenaLayout: workingArenaLayout,
+          transport: transport,
+          onHudUpdate: updateGameHud,
+          onGameOver: handleGameOver
+        });
+        activeGameInstance.bindDOMEvents(document.getElementById('ingameCannonSlider'));
+        configureInGameCannonSlider();
+
+        launchActiveMatch();
+        setTimeout(() => activeGameInstance.initiateClockSync(), 400);
+      }
+
+      function launchActiveMatch() {
+        showScreen('screenGame');
+        configureInGameCannonSlider();
+
+        const hudRole = document.getElementById('hudPlayerRole');
+        const hudBadge = document.getElementById('hudPlayerBadge');
+
+        if (currentRole === "HOST") {
+          hudRole.textContent = "You (Blue Tank) • HOST";
+          hudBadge.style.borderColor = "var(--primary-blue)";
+        } else {
+          hudRole.textContent = "You (Red Tank) • GUEST";
+          hudBadge.style.borderColor = "var(--enemy-red)";
+        }
+
+        activeGameInstance.start();
+      }
+
+      function updateGameHud(stats) {
+        if (!stats) return;
+
+        const pingEl = document.getElementById('hudSubtlePing');
+        pingEl.textContent = `Ping: ${stats.rtt}ms | ${stats.role} [${stats.state}]`;
+
+        const champBtn = document.getElementById('btnSummonChampion');
+        champBtn.textContent = `⚡ GIANT (${stats.championEnergy}%)`;
+        champBtn.disabled = stats.championEnergy < 100;
+      }
+
+      function handleGameOver(result) {
+        showScreen('screenLoot');
+
+        const titleEl = document.getElementById('lootResultTitle');
+        const subEl = document.getElementById('lootResultSubtitle');
+
+        const isWinner = (currentRole === "HOST" && result.winner === "HOST") ||
+                         (currentRole === "GUEST" && result.winner === "GUEST");
+
+        if (isWinner) {
+          titleEl.textContent = "🏆 VICTORY!";
+          titleEl.style.color = "var(--gold-accent)";
+          subEl.textContent = "Authoritative Host Declaration • Enemy Fortress Destroyed";
+        } else {
+          titleEl.textContent = "💀 DEFEAT";
+          titleEl.style.color = "var(--enemy-red)";
+          subEl.textContent = "Authoritative Host Declaration • Your Base Was Overrun";
+        }
+      }
+
+    })();
+  </script>
+</body>
+</html>
